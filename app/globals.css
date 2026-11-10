@@ -92,7 +92,7 @@ button {
   background: radial-gradient(ellipse at 50% 65%, var(--felt) 0%, var(--felt-deep) 45%, var(--bg) 75%);
 }
 
-/* Тонкая сетка и свечение в углу поверх сцены, зерно поверх всего */
+/* Свечение в углу поверх сцены, зерно поверх всего */
 .page::before,
 .page::after {
   content: "";
@@ -103,10 +103,7 @@ button {
 
 .page::before {
   z-index: 2;
-  background:
-    radial-gradient(60% 55% at 100% 0%, rgb(var(--glow) / 0.34), transparent 70%),
-    linear-gradient(rgb(var(--ink-rgb) / 0.035) 1px, transparent 1px) 0 0 / 56px 56px,
-    linear-gradient(90deg, rgb(var(--ink-rgb) / 0.035) 1px, transparent 1px) 0 0 / 56px 56px;
+  background: radial-gradient(60% 55% at 100% 0%, rgb(var(--glow) / 0.34), transparent 70%);
 }
 
 .page::after {
