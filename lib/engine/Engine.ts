@@ -11,7 +11,18 @@ import { buildPile, type ChipRest } from "./layout";
 import { Sound } from "./sound";
 import { buildStudioEnvironment } from "./studio";
 import { BOX, BOXES, feltGeometry, inlayGeometries, railGeometry, TABLE, trackGeometry } from "./table";
-import { allInTextures, cardBackTextures, CHIP_STYLES, chipTextures, feltTextures, gridTexture, kingTextures, woodTexture } from "./textures";
+import {
+  allInTextures,
+  backgroundTexture,
+  cardBackTextures,
+  CHIP_STYLES,
+  chipTextures,
+  feltTextures,
+  gridTexture,
+  kingTextures,
+  woodTexture,
+} from "./textures";
+import { THEME } from "@/lib/theme";
 
 export type Callout = { el: HTMLElement; line: SVGLineElement; key: "chips" | "cards" | "allin"; side: "l" | "r" };
 export type FrameState = { seq: number; labels: number; scrollY: number };
@@ -101,6 +112,7 @@ export class Engine {
   private lockQuality = false;
 
   onFrame: ((s: FrameState) => void) | null = null;
+  private bgTexture!: THREE.Texture;
 
   constructor(private canvas: HTMLCanvasElement) {
     this.lockQuality = new URLSearchParams(location.search).get("q") === "lock";
@@ -113,7 +125,8 @@ export class Engine {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
 
-    this.scene.background = new THREE.Color(0x040605);
+    this.bgTexture = backgroundTexture();
+    this.scene.background = this.bgTexture;
     this.scene.environment = buildStudioEnvironment(this.renderer);
     this.scene.environmentIntensity = 1.15;
 
@@ -166,7 +179,7 @@ export class Engine {
     table.position.z = TABLE.z;
 
     const feltMat = new THREE.MeshPhysicalMaterial({
-      color: 0x136b4b,
+      color: THEME.felt.color,
       map: fade,
       roughness: 0.96,
       metalness: 0,
@@ -174,7 +187,7 @@ export class Engine {
       bumpScale: 0.6,
       sheen: 1,
       sheenRoughness: 0.55,
-      sheenColor: new THREE.Color(0x3fae86),
+      sheenColor: new THREE.Color(THEME.felt.sheen),
       sheenColorMap: fade,
       specularIntensity: 0.15,
     });
@@ -190,19 +203,19 @@ export class Engine {
       clearcoatRoughness: 0.08,
       side: THREE.DoubleSide,
     });
-    const gold = new THREE.MeshPhysicalMaterial({ color: 0xdcb469, metalness: 1, roughness: 0.2, side: THREE.DoubleSide });
+    const gold = new THREE.MeshPhysicalMaterial({ color: THEME.goldMetal, metalness: 1, roughness: 0.2, side: THREE.DoubleSide });
     const leatherBump = bump.clone();
     leatherBump.repeat.set(60, 3);
     leatherBump.needsUpdate = true;
     const leather = new THREE.MeshPhysicalMaterial({
-      color: 0x17100d,
+      color: THEME.leather.color,
       roughness: 0.5,
       bumpMap: leatherBump,
       bumpScale: 0.35,
       clearcoat: 0.25,
       clearcoatRoughness: 0.45,
       sheen: 0.4,
-      sheenColor: new THREE.Color(0x6b4a36),
+      sheenColor: new THREE.Color(THEME.leather.sheen),
       side: THREE.DoubleSide,
     });
 
@@ -315,7 +328,7 @@ export class Engine {
       clearcoat: 1,
       clearcoatRoughness: 0.06,
     });
-    const gold = new THREE.MeshPhysicalMaterial({ color: 0xdcb469, metalness: 1, roughness: 0.14 });
+    const gold = new THREE.MeshPhysicalMaterial({ color: THEME.goldMetal, metalness: 1, roughness: 0.14 });
     const triMesh = new THREE.Mesh(allInGeometry(), [lacquer, lacquer, gold]);
     triMesh.castShadow = true;
     triMesh.receiveShadow = true;
@@ -395,7 +408,7 @@ export class Engine {
     } else {
       this.felt.material = this.realMaterials.get(this.felt)!;
     }
-    (this.scene.background as THREE.Color).set(on ? 0x040d1a : 0x040605);
+    this.scene.background = on ? new THREE.Color(0x040d1a) : this.bgTexture;
   }
 
   /** Подбросить всю кучу (после удержания кнопки). */

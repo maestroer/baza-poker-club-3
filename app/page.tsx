@@ -1,9 +1,10 @@
-import Header from "@/components/Header";
+import Hud from "@/components/Hud";
 import Scene from "@/components/Scene";
 import SignupForm from "@/components/SignupForm";
+import { MENU } from "@/lib/menu";
 import { SITE } from "@/lib/site";
 
-// Тексты, меню и цены ниже — заглушки для макета. Замените на реальные.
+// Тексты шагов ниже — заглушки для макета. Меню и цены — в lib/menu.ts.
 const STEPS = [
   { n: "01", title: "Записываетесь", text: "Выбираете вечер и оставляете контакт. Мест за столами ограниченное число." },
   { n: "02", title: "Получаете стек", text: "У всех игроков одинаковый стартовый набор турнирных фишек." },
@@ -11,51 +12,48 @@ const STEPS = [
   { n: "04", title: "Растёте в рейтинге", text: "За каждое место начисляются очки. Таблица сезона обновляется после каждой игры." },
 ];
 
-const MENU = [
-  {
-    title: "Напитки",
-    items: [
-      ["Фильтр-кофе", "250 ₽"],
-      ["Капучино", "320 ₽"],
-      ["Чай в чайнике", "400 ₽"],
-      ["Домашний лимонад", "380 ₽"],
-      ["Безалкогольный спритц", "450 ₽"],
-    ],
-  },
-  {
-    title: "К столу",
-    items: [
-      ["Клаб-сэндвич", "590 ₽"],
-      ["Брускетты, сет из трёх", "520 ₽"],
-      ["Картофель с трюфельным соусом", "390 ₽"],
-      ["Сырная тарелка", "690 ₽"],
-      ["Орехи и оливки", "350 ₽"],
-    ],
-  },
-];
+/** Номер и название раздела — как шаг в раскадровке. */
+function Head({ n, label }: { n: string; label: string }) {
+  return (
+    <div className="sec-head">
+      <b>{n}</b>
+      <span>{label}</span>
+    </div>
+  );
+}
 
 export default function Home() {
+  const [featured, ...groups] = MENU;
+
   return (
     <main className="page" id="top">
       <Scene />
-      <Header />
+      <Hud />
 
       <div className="story">
         {/* Заставка */}
         <section className="hero" data-cue="hero">
           <div className="hero-copy">
             <p className="eyebrow">{SITE.tagline}</p>
-            <h1 className="hero-title">{SITE.name}</h1>
+            <h1 className="hero-title">
+              {SITE.title.map((part) => (
+                <span key={part.text} className={part.style}>
+                  {part.text}
+                </span>
+              ))}
+            </h1>
             <p className="hero-lead">
-              Турнирный холдем как спорт: стратегия, рейтинг и живая игра за одним столом. Без денежных ставок.
+              Турнирный холдем как спорт: стратегия, рейтинг и живая игра за одним столом. Играем{" "}
+              <em className="ink">не на деньги.</em>
             </p>
+            <ul className="tags">
+              {SITE.tags.map((tag) => (
+                <li key={tag}>{tag}</li>
+              ))}
+            </ul>
             <a href="#signup" className="btn btn-primary btn-big">
               Записаться на игру <span aria-hidden="true">→</span>
             </a>
-          </div>
-          <div className="scroll-hint" data-hint>
-            <span>Листайте</span>
-            <i />
           </div>
         </section>
 
@@ -63,11 +61,15 @@ export default function Home() {
         <section className="stage" data-cue="stage" aria-label="Раздача">
           <div className="stage-pin">
             <div className="cap" data-cap data-from="0.56" data-to="0.75">
-              <h2>Два короля.</h2>
+              <h2>
+                Два <em className="ink">короля.</em>
+              </h2>
               <p>Вторая по силе стартовая рука в холдеме. Сыграть её правильно — уже мастерство.</p>
             </div>
-            <div className="cap cap-allin" data-cap data-from="0.8" data-to="0.915">
-              <h2>All-in.</h2>
+            <div className="cap" data-cap data-from="0.8" data-to="0.915">
+              <h2>
+                <em className="ink">All-in.</em>
+              </h2>
               <p>Самое громкое слово за столом. На кону — только рейтинг.</p>
             </div>
           </div>
@@ -75,20 +77,16 @@ export default function Home() {
 
         {/* Не на деньги */}
         <section className="panel panel-left" data-cue="nocash" id="nocash">
-          <div className="panel-body">
-            <p className="eyebrow" data-reveal>
-              Главное правило
-            </p>
-            <h2 data-reveal>
-              Игра идёт
-              <br />
-              не на деньги.
+          <div className="panel-body plate" data-reveal>
+            <Head n="01" label="Главное правило" />
+            <h2>
+              Игра идёт <em className="ink">не на деньги.</em>
             </h2>
-            <p className="lead" data-reveal>
+            <p className="lead">
               Спортивный покер — это турнир, а не казино. Фишки не имеют денежной стоимости: их нельзя купить, продать
               или обменять. Мы не принимаем ставки и не разыгрываем денежные призы.
             </p>
-            <ul className="facts" data-reveal>
+            <ul className="facts">
               <li>
                 <b>0 ₽</b>
                 <span>ставок за столом</span>
@@ -107,19 +105,17 @@ export default function Home() {
 
         {/* Формат */}
         <section className="panel panel-right" data-cue="format" id="format">
-          <div className="panel-body">
-            <p className="eyebrow" data-reveal>
-              Как проходит вечер
-            </p>
-            <h2 data-reveal>Четыре шага от входа до финального стола.</h2>
+          <div className="panel-body plate" data-reveal>
+            <Head n="02" label="Как проходит вечер" />
+            <h2>
+              Четыре шага до <em className="ink">финального стола.</em>
+            </h2>
             <ol className="steps">
               {STEPS.map((s) => (
-                <li key={s.n} data-reveal>
+                <li key={s.n}>
                   <span className="step-n">{s.n}</span>
-                  <div>
-                    <h3>{s.title}</h3>
-                    <p>{s.text}</p>
-                  </div>
+                  <h3>{s.title}</h3>
+                  <p>{s.text}</p>
                 </li>
               ))}
             </ol>
@@ -128,23 +124,27 @@ export default function Home() {
 
         {/* Меню */}
         <section className="panel panel-left" data-cue="menu" id="menu">
-          <div className="panel-body panel-body-wide">
-            <p className="eyebrow" data-reveal>
-              Бар и кухня
-            </p>
-            <h2 data-reveal>Меню, которое не отвлекает от игры.</h2>
-            <p className="lead" data-reveal>
-              Всё подаётся прямо к столу и удобно есть одной рукой — вторая занята картами.
-            </p>
+          <div className="panel-body panel-body-wide plate" data-reveal>
+            <Head n="03" label="Бар и кальян" />
+            <h2>
+              Кальян, чай и всё <em className="ink">к столу.</em>
+            </h2>
             <div className="menu">
-              {MENU.map((group) => (
-                <div key={group.title} className="menu-group" data-reveal>
+              <div className="menu-group menu-featured">
+                <h3>{featured.title}</h3>
+                <p className="menu-price">{featured.items[0][2]}</p>
+                <p className="menu-note">Подаём прямо к столу, чтобы не отвлекаться от раздачи.</p>
+              </div>
+              {groups.map((group) => (
+                <div key={group.title} className="menu-group">
                   <h3>{group.title}</h3>
                   <ul>
-                    {group.items.map(([name, price]) => (
-                      <li key={name}>
-                        <span>{name}</span>
-                        <i />
+                    {group.items.map(([name, note, price]) => (
+                      <li key={name + note}>
+                        <span>
+                          {name}
+                          {note && <small>{note}</small>}
+                        </span>
                         <b>{price}</b>
                       </li>
                     ))}
@@ -157,18 +157,16 @@ export default function Home() {
 
         {/* Запись */}
         <section className="panel panel-right" data-cue="signup" id="signup">
-          <div className="panel-body">
-            <p className="eyebrow" data-reveal>
-              Запись на игру
-            </p>
-            <h2 data-reveal>Займите место за столом.</h2>
-            <p className="lead" data-reveal>
+          <div className="panel-body plate" data-reveal>
+            <Head n="04" label="Запись на игру" />
+            <h2>
+              Займите место <em className="ink">за столом.</em>
+            </h2>
+            <p className="lead">
               Выберите формат, укажите имя и ник — кнопка откроет чат с менеджером с готовым сообщением. Опыт не
               обязателен: правила объясним.
             </p>
-            <div data-reveal>
-              <SignupForm />
-            </div>
+            <SignupForm />
           </div>
         </section>
 
@@ -176,7 +174,7 @@ export default function Home() {
           <div className="footer-top">
             <div>
               <p className="footer-name">{SITE.name}</p>
-              <p className="muted">{SITE.tagline}</p>
+              <p className="eyebrow">{SITE.tagline}</p>
             </div>
             <dl className="footer-info">
               <div>

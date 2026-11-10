@@ -1,10 +1,12 @@
 import * as THREE from "three";
+import { THEME, type ChipStyle } from "@/lib/theme";
 
 // Все текстуры рисуются кодом на canvas при загрузке. Файлов изображений нет.
 // Для каждой детали делаем пару: цвет и карта «шероховатость (G) / металл (B)».
+// Цвета и надписи берутся из lib/theme.ts.
 
-const GOLD = "#d2ac62";
-const IVORY = "#f1ebdd";
+const GOLD = THEME.gold;
+const SERIF = THEME.serif;
 
 type Mode = "color" | "orm";
 
@@ -44,30 +46,33 @@ function pair(w: number, h: number, draw: (ctx: CanvasRenderingContext2D, mode: 
 
 /* ───────────────────────────── Фишки ───────────────────────────── */
 
-export type ChipStyle = { base: string; inlay: string; insert: string; value: string };
+export type { ChipStyle };
 
-export const CHIP_STYLES: ChipStyle[] = [
-  { base: "#15161a", inlay: "#0c0d10", insert: GOLD, value: "1000" },
-  { base: "#8e1b1f", inlay: "#6d1216", insert: IVORY, value: "500" },
-  { base: "#11543d", inlay: "#0b3d2c", insert: IVORY, value: "100" },
-  { base: "#e9e2d2", inlay: "#f4eee1", insert: "#8e1b1f", value: "25" },
-];
+export const CHIP_STYLES: ChipStyle[] = THEME.chips;
+
+/** Надпись по кругу: название повторяется, пока не заполнит окружность. */
+function ringText() {
+  const unit = `${THEME.brand} · `;
+  let text = unit;
+  while (text.length + unit.length <= 34) text += unit;
+  return text;
+}
 
 export function chipTextures(style: ChipStyle): TexturePair {
   const S = 512;
-  const light = style.base === "#e9e2d2";
   return pair(S, S, (ctx, mode) => {
     const c = S / 2;
     const R = S * 0.49; // край фишки (совпадает с планарной развёрткой)
-    const foilIsMetal = !light;
-    const foil = light ? "#8e1b1f" : GOLD;
+    const foilIsMetal = !style.foil;
+    const foil = style.foil ?? GOLD;
+    const insertIsMetal = style.insert === GOLD;
 
     ctx.fillStyle = ink(mode, style.base, 0.62);
     ctx.fillRect(0, 0, S, S);
 
     // Шесть вставок по краю. Тянутся за пределы круга, поэтому ребро фишки
     // получает такие же полосы автоматически.
-    ctx.fillStyle = ink(mode, style.insert, style.insert === GOLD ? 0.3 : 0.6, style.insert === GOLD ? 1 : 0);
+    ctx.fillStyle = ink(mode, style.insert, insertIsMetal ? 0.3 : 0.6, insertIsMetal ? 1 : 0);
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
       const w = 0.2;
@@ -79,7 +84,7 @@ export function chipTextures(style: ChipStyle): TexturePair {
     }
 
     // Мелкие метки между вставками
-    ctx.fillStyle = ink(mode, style.insert, 0.48, style.insert === GOLD ? 1 : 0);
+    ctx.fillStyle = ink(mode, style.insert, 0.48, insertIsMetal ? 1 : 0);
     for (let i = 0; i < 6; i++) {
       const a = ((i + 0.5) / 6) * Math.PI * 2;
       ctx.beginPath();
@@ -109,12 +114,12 @@ export function chipTextures(style: ChipStyle): TexturePair {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const big = style.value.length > 3 ? 0.3 : 0.38;
-    ctx.font = `700 ${R * big}px Georgia, "Times New Roman", serif`;
+    ctx.font = `700 ${R * big}px ${SERIF}`;
     ctx.fillText(style.value, c, c + R * 0.02);
 
-    // Надпись по кругу — на турнирных фишках так и пишут
-    const text = "NO CASH VALUE · SPORT POKER · ";
-    ctx.font = `600 ${R * 0.085}px Arial, Helvetica, sans-serif`;
+    // Название клуба по кругу
+    const text = ringText();
+    ctx.font = `700 ${R * 0.085}px Arial, Helvetica, sans-serif`;
     const rr = R * 0.435;
     for (let i = 0; i < text.length; i++) {
       const a = (i / text.length) * Math.PI * 2 - Math.PI / 2;
@@ -196,11 +201,11 @@ export const CARD_PX = 10; // пикселей на миллиметр
 export function kingTextures(kind: "spade" | "heart"): TexturePair {
   const W = 63 * CARD_PX;
   const H = 88 * CARD_PX;
-  const suitColor = kind === "spade" ? "#14161a" : "#b0201d";
-  const foil = "#b8924a";
+  const suitColor = kind === "spade" ? THEME.card.spade : THEME.card.heart;
+  const foil = GOLD;
 
   return pair(W, H, (ctx, mode) => {
-    ctx.fillStyle = ink(mode, "#f5f0e4", 0.4);
+    ctx.fillStyle = ink(mode, THEME.card.face, 0.4);
     ctx.fillRect(0, 0, W, H);
 
     // Рамка двойной линией
@@ -217,15 +222,21 @@ export function kingTextures(kind: "spade" | "heart"): TexturePair {
       ctx.fillStyle = ink(mode, suitColor, 0.36);
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
-      ctx.font = `700 104px Georgia, "Times New Roman", serif`;
+      ctx.font = `700 104px ${SERIF}`;
       ctx.fillText("K", 62, 128);
       suit(ctx, kind, 62, 180, 44);
+
+      // Название клуба на поле над рамкой
+      ctx.fillStyle = ink(mode, foil, 0.2, 1);
+      ctx.textBaseline = "middle";
+      spacedText(ctx, THEME.brand, W / 2, fy / 2 + 4, THEME.brand.length <= 6 ? 44 : 30, 0.22, 360);
+      ctx.textBaseline = "alphabetic";
 
       // Корона и большая «K» внутри рамки
       ctx.fillStyle = ink(mode, foil, 0.2, 1);
       crown(ctx, W / 2, 178, 118);
       ctx.fillStyle = ink(mode, suitColor, 0.36);
-      ctx.font = `700 196px Georgia, "Times New Roman", serif`;
+      ctx.font = `700 196px ${SERIF}`;
       ctx.fillText("K", W / 2, 388);
     };
 
@@ -245,14 +256,64 @@ export function kingTextures(kind: "spade" | "heart"): TexturePair {
   });
 }
 
+/** Текст с разрядкой, ужатый до maxW пикселей. */
+function spacedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  size: number,
+  spacing: number,
+  maxW: number,
+) {
+  ctx.font = `700 ${size}px Arial, Helvetica, sans-serif`;
+  const gap = size * spacing;
+  const widths = [...text].map((ch) => ctx.measureText(ch).width);
+  const total = widths.reduce((s, w) => s + w, 0) + gap * (text.length - 1);
+  const k = Math.min(1, maxW / total);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(k, k);
+  ctx.textAlign = "left";
+  let cx = -total / 2;
+  [...text].forEach((ch, i) => {
+    ctx.fillText(ch, cx, 0);
+    cx += widths[i] + gap;
+  });
+  ctx.restore();
+  ctx.textAlign = "center";
+}
+
+/** Текст по дуге окружности радиуса r, по центру сверху (top) или снизу. */
+function arcText(ctx: CanvasRenderingContext2D, text: string, cx: number, cy: number, r: number, size: number, top: boolean) {
+  ctx.font = `700 ${size}px Arial, Helvetica, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const chars = [...text];
+  const widths = chars.map((ch) => ctx.measureText(ch).width + size * 0.28);
+  const total = widths.reduce((s, w) => s + w, 0);
+  let a = (top ? -Math.PI / 2 : Math.PI / 2) + ((top ? -1 : 1) * total) / r / 2;
+  chars.forEach((ch, i) => {
+    const step = widths[i] / r;
+    a += top ? step / 2 : -step / 2;
+    ctx.save();
+    ctx.translate(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+    ctx.rotate(top ? a + Math.PI / 2 : a - Math.PI / 2);
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+    a += top ? step / 2 : -step / 2;
+  });
+}
+
 export function cardBackTextures(): TexturePair {
   const W = 63 * CARD_PX;
   const H = 88 * CARD_PX;
+  const back = THEME.card.back;
   return pair(W, H, (ctx, mode) => {
-    ctx.fillStyle = ink(mode, "#f5f0e4", 0.4);
+    ctx.fillStyle = ink(mode, THEME.card.face, 0.4);
     ctx.fillRect(0, 0, W, H);
     const m = 38;
-    ctx.fillStyle = ink(mode, "#0f3d2d", 0.38);
+    ctx.fillStyle = ink(mode, back, 0.38);
     ctx.fillRect(m, m, W - m * 2, H - m * 2);
 
     // Ромбовидная сетка
@@ -260,8 +321,9 @@ export function cardBackTextures(): TexturePair {
     ctx.beginPath();
     ctx.rect(m, m, W - m * 2, H - m * 2);
     ctx.clip();
-    ctx.strokeStyle = ink(mode, "#c9a45c", 0.22, 1);
+    ctx.strokeStyle = ink(mode, GOLD, 0.22, 1);
     ctx.lineWidth = 1.6;
+    ctx.globalAlpha = mode === "color" ? 0.55 : 1;
     for (let i = -H; i < W + H; i += 34) {
       ctx.beginPath();
       ctx.moveTo(i, 0);
@@ -272,15 +334,33 @@ export function cardBackTextures(): TexturePair {
     }
     ctx.restore();
 
-    ctx.fillStyle = ink(mode, "#0f3d2d", 0.38);
+    // Медальон: монограмма или пика в центре, название по кругу
+    const cx = W / 2;
+    const cy = H / 2;
+    ctx.fillStyle = ink(mode, back, 0.38);
     ctx.beginPath();
-    ctx.arc(W / 2, H / 2, 96, 0, Math.PI * 2);
+    ctx.arc(cx, cy, 178, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = ink(mode, "#c9a45c", 0.22, 1);
+    ctx.strokeStyle = ink(mode, GOLD, 0.22, 1);
     ctx.lineWidth = 4;
     ctx.stroke();
-    ctx.fillStyle = ink(mode, "#c9a45c", 0.22, 1);
-    suit(ctx, "spade", W / 2, H / 2, 74);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 116, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = ink(mode, GOLD, 0.22, 1);
+    arcText(ctx, THEME.brand, cx, cy, 146, THEME.brand.length <= 6 ? 38 : 30, true);
+    arcText(ctx, "♠ ♥ ♣ ♦", cx, cy, 146, 26, false);
+
+    if (THEME.monogram) {
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `400 128px ${SERIF}`;
+      ctx.fillText(THEME.monogram, cx, cy + 6);
+    } else {
+      suit(ctx, "spade", cx, cy, 82);
+    }
   });
 }
 
@@ -305,7 +385,7 @@ export function allInTextures(side: number): TexturePair {
   };
 
   return pair(S, S, (ctx, mode) => {
-    ctx.fillStyle = ink(mode, "#9c1418", 0.16);
+    ctx.fillStyle = ink(mode, THEME.allIn.lacquer, 0.16);
     ctx.fillRect(0, 0, S, S);
 
     ctx.lineJoin = "round";
@@ -317,7 +397,7 @@ export function allInTextures(side: number): TexturePair {
     tri(ctx, 7.4);
     ctx.stroke();
 
-    ctx.fillStyle = ink(mode, IVORY, 0.3);
+    ctx.fillStyle = ink(mode, THEME.allIn.text, 0.3);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `900 ${15.5 * k}px "Arial Black", "Arial Bold", Impact, Arial, sans-serif`;
@@ -370,11 +450,12 @@ export function feltTextures(
     ctx.arc(W / 2 - aa, H / 2, rr, Math.PI / 2, Math.PI * 1.5);
     ctx.closePath();
   };
-  ctx.strokeStyle = "rgba(255,244,214,0.5)";
+  const L = THEME.felt.line;
+  ctx.strokeStyle = `rgba(${L},0.5)`;
   ctx.lineWidth = 2.2 * k;
   stadium(line);
   ctx.stroke();
-  ctx.strokeStyle = "rgba(255,244,214,0.26)";
+  ctx.strokeStyle = `rgba(${L},0.26)`;
   ctx.lineWidth = 0.8 * k;
   stadium(line + 6);
   ctx.stroke();
@@ -389,7 +470,7 @@ export function feltTextures(
     ctx.roundRect(x, y, bw, bh, box.r * k);
     ctx.fillStyle = "rgba(0,0,0,0.16)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(255,244,214,0.85)";
+    ctx.strokeStyle = `rgba(${L},0.85)`;
     ctx.lineWidth = 2 * k;
     ctx.stroke();
   }
@@ -444,6 +525,21 @@ export function woodTexture() {
   const t = toTexture(c, true);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return t;
+}
+
+/** Фон сцены: мягкий градиент из центра к краям. */
+export function backgroundTexture() {
+  const W = 512;
+  const H = 512;
+  const c = makeCanvas(W, H);
+  const ctx = c.getContext("2d")!;
+  const [fx, fy] = THEME.bg.focus;
+  const g = ctx.createRadialGradient(W * fx, H * fy, 0, W * fx, H * fy, W * 1.05);
+  g.addColorStop(0, THEME.bg.inner);
+  g.addColorStop(1, THEME.bg.outer);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  return toTexture(c, true);
 }
 
 /** Тёмная сетка для режима чертежа. */
