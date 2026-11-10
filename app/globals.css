@@ -24,7 +24,6 @@
   --muted: rgb(var(--ink-rgb) / 0.62);
   --faint: rgb(var(--ink-rgb) / 0.13);
   --plate: rgb(var(--bg-rgb) / 0.95);
-  --frame: clamp(10px, 1.6vw, 22px); /* отступ угловых меток от края экрана */
   --pad: clamp(22px, 6vw, 96px);
   --ease: cubic-bezier(0.22, 0.8, 0.26, 1);
 }
@@ -288,8 +287,7 @@ h2 {
   gap: 8px;
 }
 
-.tags li,
-.chip-btn {
+.tags li {
   padding: 7px 11px;
   border: 1px solid var(--faint);
   border-radius: 8px;
@@ -307,106 +305,35 @@ h2 {
   color: var(--on-accent);
 }
 
-.chip-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: color 0.2s, border-color 0.2s;
-}
-
-.chip-btn::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--faint);
-  transition: background 0.2s, box-shadow 0.2s;
-}
-
-.chip-btn:hover {
-  color: var(--ink);
-}
-
-.chip-btn[aria-pressed="true"] {
-  color: var(--ink);
-  border-color: rgb(var(--accent-rgb) / 0.6);
-}
-
-.chip-btn[aria-pressed="true"]::before {
-  background: var(--accent);
-  box-shadow: 0 0 10px var(--accent);
-}
-
-/* ───────────── кадр: углы, шапка, полоса прогресса ───────────── */
+/* ───────────── шапка ───────────── */
 
 .hud {
   position: fixed;
   inset: 0;
   z-index: 50;
   pointer-events: none;
-  --p: 0;
 }
 
-.hud a,
-.hud button {
+.hud a {
   pointer-events: auto;
 }
 
-.corner {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border: 0 solid var(--accent);
-}
-
-.corner-tl {
-  top: var(--frame);
-  left: var(--frame);
-  border-width: 2px 0 0 2px;
-}
-
-.corner-tr {
-  top: var(--frame);
-  right: var(--frame);
-  border-width: 2px 2px 0 0;
-}
-
-.corner-bl {
-  bottom: var(--frame);
-  left: var(--frame);
-  border-width: 0 0 2px 2px;
-}
-
-.corner-br {
-  bottom: var(--frame);
-  right: var(--frame);
-  border-width: 0 2px 2px 0;
-}
-
-.hud-top,
-.hud-bottom {
+.hud-top {
   position: absolute;
   left: 0;
   right: 0;
   display: flex;
   align-items: center;
   gap: 22px;
-  padding: 0 calc(var(--frame) + 26px);
+  padding: 0 var(--pad);
 }
 
 .hud-top {
   top: 0;
   justify-content: space-between;
-  padding-top: calc(var(--frame) + 14px);
+  padding-top: 20px;
   padding-bottom: 26px;
   background: linear-gradient(to bottom, rgb(var(--bg-rgb) / 0.86), rgb(var(--bg-rgb) / 0));
-}
-
-.hud-bottom {
-  bottom: 0;
-  padding-top: 30px;
-  padding-bottom: calc(var(--frame) + 12px);
-  background: linear-gradient(to top, rgb(var(--bg-rgb) / 0.86), rgb(var(--bg-rgb) / 0));
 }
 
 .brand {
@@ -454,45 +381,6 @@ h2 {
   color: var(--ink);
 }
 
-.hud-tools {
-  display: flex;
-  gap: 8px;
-}
-
-.hud-track {
-  flex: 1;
-  height: 1px;
-  background: var(--faint);
-}
-
-.hud-track i {
-  display: block;
-  height: 3px;
-  margin-top: -1px;
-  background: var(--accent);
-  transform-origin: left;
-  transform: scaleX(var(--p));
-  box-shadow: 0 0 12px rgb(var(--accent-rgb) / 0.7);
-}
-
-.hud-beat {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.hud-beat b {
-  font-weight: 500;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
 /* ───────────── заставка ───────────── */
 
 .hero {
@@ -500,7 +388,7 @@ h2 {
   min-height: 100svh;
   display: flex;
   align-items: center;
-  padding: 130px var(--pad) 110px;
+  padding: 130px var(--pad) 90px;
 }
 
 .hero-copy {
@@ -1016,7 +904,7 @@ h2 {
 
 .footer {
   position: relative;
-  padding: 90px var(--pad) 110px;
+  padding: 90px var(--pad) 44px;
   background: linear-gradient(to bottom, rgb(var(--bg-rgb) / 0), rgb(var(--bg-rgb) / 0.94) 24%);
   display: grid;
   gap: 40px;
@@ -1070,9 +958,6 @@ h2 {
     display: none;
   }
 
-  .hud-beat span {
-    display: none;
-  }
 }
 
 @media (max-width: 760px) {
@@ -1080,11 +965,8 @@ h2 {
     font-size: 16px;
   }
 
-  .hud-top,
-  .hud-bottom {
+  .hud-top {
     gap: 12px;
-    padding-left: calc(var(--frame) + 12px);
-    padding-right: calc(var(--frame) + 12px);
   }
 
   .brand {
@@ -1098,12 +980,6 @@ h2 {
   .hud-top .btn {
     padding: 9px 12px;
     font-size: 11px;
-  }
-
-  .chip-btn {
-    padding: 6px 9px;
-    font-size: 10px;
-    letter-spacing: 0.1em;
   }
 
   .hero {
