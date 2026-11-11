@@ -19,6 +19,16 @@ export const THEME = {
   /** Шрифт для номиналов и букв на картах (системный, рисуется на canvas) */
   serif: `Georgia, "Times New Roman", serif`,
 
+  /** Знак в центре фишки; font: "serif" — шрифт выше, "brand" — шрифт названия с сайта */
+  chipMark: { text: "ФЛЭШ", font: "brand" as "serif" | "brand" },
+  /** Логотип, напечатанный на сукне в центре стола */
+  tableLogo: {
+    monogram: "", // знак в круге над названием; пусто — без круга
+    title: "ФЛЭШ",
+    sub: "КЛУБ СПОРТИВНОГО ПОКЕРА",
+    font: "brand" as "serif" | "brand",
+  },
+
   /** Фон сцены: медное свечение в правом нижнем углу уходит в темноту, как на логотипе */
   bg: { inner: "#9a4416", outer: "#0b0605", focus: [0.95, 0.9] as [number, number] },
 

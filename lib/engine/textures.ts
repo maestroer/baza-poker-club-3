@@ -50,6 +50,24 @@ export type { ChipStyle };
 
 export const CHIP_STYLES: ChipStyle[] = THEME.chips;
 
+/** Шрифт для знака: системный из темы или тот, что подключён на сайте для названия. */
+function markFont(kind: "serif" | "brand") {
+  if (kind === "serif") return `400 {size}px ${SERIF}`;
+  const css = getComputedStyle(document.documentElement);
+  const family = (css.getPropertyValue("--font-brand") || css.getPropertyValue("--font-display")).trim();
+  return `900 {size}px ${family || "Arial Black"}, "Arial Black", Arial, sans-serif`;
+}
+
+/** Текст по центру точки: размер size, но не шире maxW. font — шаблон с {size}. */
+function fitText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, maxW: number, font: string) {
+  ctx.font = font.replace("{size}", String(size));
+  const w = ctx.measureText(text).width;
+  const s = w > maxW ? (size * maxW) / w : size;
+  ctx.font = font.replace("{size}", String(s));
+  ctx.fillText(text, x, y);
+  return s;
+}
+
 /** Надпись по кругу: название повторяется, пока не заполнит окружность. */
 function ringText() {
   const unit = `${THEME.brand} · `;
@@ -109,13 +127,13 @@ export function chipTextures(style: ChipStyle): TexturePair {
     ctx.arc(c, c, R * 0.55, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Номинал
+    // Знак клуба в центре, номинал под ним
     ctx.fillStyle = ink(mode, foil, 0.22, foilIsMetal ? 1 : 0);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    const big = style.value.length > 3 ? 0.3 : 0.38;
-    ctx.font = `700 ${R * big}px ${SERIF}`;
-    ctx.fillText(style.value, c, c + R * 0.02);
+    fitText(ctx, THEME.chipMark.text, c, c - R * 0.06, R * 0.3, R * 0.56, markFont(THEME.chipMark.font));
+    ctx.font = `700 ${R * 0.13}px ${SERIF}`;
+    ctx.fillText(style.value, c, c + R * 0.25);
 
     // Название клуба по кругу
     const text = ringText();
@@ -525,6 +543,70 @@ export function woodTexture() {
   const t = toTexture(c, true);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return t;
+}
+
+/**
+ * Логотип клуба для печати на сукне: золото на прозрачном фоне.
+ * w, h — размер в мм; верх холста смотрит от камеры (к дальнему борту).
+ */
+export function tableLogoTexture(w: number, h: number) {
+  const k = 2048 / w;
+  const W = 2048;
+  const H = Math.round(h * k);
+  const c = makeCanvas(W, H);
+  const ctx = c.getContext("2d")!;
+  const L = THEME.tableLogo;
+  const font = markFont(L.font);
+  ctx.fillStyle = GOLD;
+  ctx.strokeStyle = GOLD;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  let y = H * 0.12;
+  if (L.monogram) {
+    // знак в двойном круге, как на логотипе
+    const r = H * 0.2;
+    const cy = y + r;
+    ctx.lineWidth = H * 0.008;
+    ctx.beginPath();
+    ctx.arc(W / 2, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.lineWidth = H * 0.004;
+    ctx.beginPath();
+    ctx.arc(W / 2, cy, r * 0.88, 0, Math.PI * 2);
+    ctx.stroke();
+    fitText(ctx, L.monogram, W / 2, cy + r * 0.04, r * 1.05, r * 1.4, font);
+    y = cy + r + H * 0.1;
+  } else {
+    y = H * 0.36;
+  }
+
+  // Название
+  const titleSize = L.monogram ? H * 0.15 : H * 0.42;
+  ctx.textBaseline = "middle";
+  if (L.monogram) {
+    // под монограммой название идёт разреженными капителями, как на логотипе
+    spacedText(ctx, L.title, W / 2, y + titleSize * 0.5, titleSize, 0.22, W * 0.92);
+  } else {
+    fitText(ctx, L.title, W / 2, y + titleSize * 0.5, titleSize, W * 0.9, font);
+  }
+  y += titleSize + H * 0.07;
+
+  // Подпись с чёрточками по бокам
+  const subSize = H * 0.055;
+  ctx.font = `700 ${subSize}px Arial, Helvetica, sans-serif`;
+  const subW = Math.min(spacedWidth(ctx, L.sub, subSize * 0.3), W * 0.7);
+  spacedText(ctx, L.sub, W / 2, y + subSize / 2, subSize, 0.3, W * 0.7);
+  const dash = subSize * 3;
+  const gap = subSize * 1.1;
+  ctx.fillRect(W / 2 - subW / 2 - gap - dash, y + subSize / 2 - H * 0.003, dash, H * 0.006);
+  ctx.fillRect(W / 2 + subW / 2 + gap, y + subSize / 2 - H * 0.003, dash, H * 0.006);
+
+  return toTexture(c, true);
+}
+
+function spacedWidth(ctx: CanvasRenderingContext2D, text: string, gap: number) {
+  return [...text].reduce((s, ch) => s + ctx.measureText(ch).width, 0) + gap * (text.length - 1);
 }
 
 /** Фон сцены: мягкий градиент из центра к краям. */

@@ -49,6 +49,8 @@ export default function Scene() {
     (async () => {
       try {
         const { Engine } = await import("@/lib/engine/Engine");
+        // Знак на фишках и логотип на столе рисуются шрифтом сайта — ждём, пока он загрузится
+        await document.fonts.ready;
         if (dead || !canvasRef.current) return;
         engine = new Engine(canvasRef.current);
 

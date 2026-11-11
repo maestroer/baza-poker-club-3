@@ -20,6 +20,7 @@ import {
   feltTextures,
   gridTexture,
   kingTextures,
+  tableLogoTexture,
   woodTexture,
 } from "./textures";
 import { THEME } from "@/lib/theme";
@@ -231,10 +232,32 @@ export class Engine {
       table.add(m);
       this.tableParts.push(m);
     }
+    // Логотип клуба, напечатанный золотом на сукне в центре стола
+    const LOGO_W = 470;
+    const LOGO_H = 260;
+    const logo = new THREE.Mesh(
+      new THREE.PlaneGeometry(LOGO_W, LOGO_H).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({
+        map: tableLogoTexture(LOGO_W, LOGO_H),
+        transparent: true,
+        opacity: 0.92,
+        roughness: 0.45,
+        metalness: 0.7,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+      }),
+    );
+    logo.position.y = 0.05;
+    logo.receiveShadow = true;
+    table.add(logo);
+    this.tableLogo = logo;
+
     this.scene.add(table);
     this.gridMat = new THREE.MeshBasicMaterial({ map: gridTexture() });
   }
   private tableParts: THREE.Mesh[] = [];
+  private tableLogo!: THREE.Mesh;
 
   private buildChips(segments: number) {
     const { chips, stackTop } = buildPile(7);
@@ -409,6 +432,7 @@ export class Engine {
       this.felt.material = this.realMaterials.get(this.felt)!;
     }
     this.scene.background = on ? new THREE.Color(0x040d1a) : this.bgTexture;
+    this.tableLogo.visible = !on;
   }
 
   /** Подбросить всю кучу (после удержания кнопки). */
